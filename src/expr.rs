@@ -31,7 +31,7 @@ impl Expr {
                 line_error(
                     ErrorType::SyntaxError,
                     token.line,
-                    format!("Unexpected token `{}`", token.lexeme),
+                    format!("expected a expr but found `{}`", token.lexeme),
                 );
                 process::exit(1);
             }
@@ -44,13 +44,14 @@ impl Expr {
     }
 
     pub fn new_unary(op: &Token, right: Expr) -> Self {
+        dbg!(op);
         let op = match op.token_type {
             TokenType::Minus => Op::Sub,
             _ => {
                 line_error(
                     ErrorType::SyntaxError,
                     op.line,
-                    format!("Only support unary minus operator"),
+                    format!("Only support unary minus operator, found `{}`", op.lexeme),
                 );
                 process::exit(1);
             }

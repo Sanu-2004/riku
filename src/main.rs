@@ -2,7 +2,10 @@ use kire::{parser::Parser, source::Source};
 
 fn main() {
     let input = r#"
-        1+2+3
+            1 + 2 - 3 * 2
+            1 + 2 - 3 / 2
+            1 + 2 * -3 / 2
+        1-2-3*2
             "#;
 
     let mut source = Source::new(input.to_string());

@@ -27,9 +27,26 @@ impl Parser {
         }
     }
 
+    fn peek_back(&self, offset: usize) -> Option<&Token> {
+        if self.current >= offset {
+            Some(&self.tokens[self.current - offset])
+        } else {
+            None
+        }
+    }
+
     fn next(&mut self) {
         if self.current < self.tokens.len() {
             self.current += 1;
+        }
+    }
+
+    fn advance(&mut self) -> Option<&Token> {
+        if self.peek().is_some() {
+            self.next();
+            self.peek_back(1)
+        } else {
+            None
         }
     }
 
@@ -76,36 +93,40 @@ impl Parser {
     }
 
     fn expr_term(&mut self) -> Option<Expr> {
-        let left = self.expr_factor()?;
-        let op = self.peek()?;
-        let op = op.clone();
-        while op.token_type == TokenType::Plus || op.token_type == TokenType::Minus {
-            self.current += 1;
+        let mut left = self.expr_factor()?;
+        while self.peek()?.token_type == TokenType::Plus
+            || self.peek()?.token_type == TokenType::Minus
+        {
+            let op = self.peek()?;
+            let op = op.clone();
+            self.next();
             let right = self.expr_factor()?;
             let expr = Expr::new_binary(left, &op, right);
-            return Some(expr);
+            left = expr;
         }
         Some(left)
     }
 
     fn expr_factor(&mut self) -> Option<Expr> {
-        let left = self.expr_unary()?;
-        let op = self.peek()?;
-        let op = op.clone();
-        while op.token_type == TokenType::Star || op.token_type == TokenType::Slash {
-            self.current += 1;
+        let mut left = self.expr_unary()?;
+        while self.peek()?.token_type == TokenType::Star
+            || self.peek()?.token_type == TokenType::Slash
+        {
+            let op = self.peek()?;
+            let op = op.clone();
+            self.next();
             let right = self.expr_unary()?;
             let expr = Expr::new_binary(left, &op, right);
-            return Some(expr);
+            left = expr;
         }
         Some(left)
     }
 
     fn expr_unary(&mut self) -> Option<Expr> {
-        let op = self.peek()?;
-        let op = op.clone();
-        if op.token_type == TokenType::Minus {
-            self.current += 1;
+        if self.peek()?.token_type == TokenType::Minus {
+            let op = self.peek()?;
+            let op = op.clone();
+            self.next();
             let right = self.expr_unary()?;
             return Some(Expr::new_unary(&op, right));
         }
@@ -113,12 +134,10 @@ impl Parser {
     }
 
     fn expr_primary(&mut self) -> Option<Expr> {
-        let token = self.peek()?;
-        let token = token.clone();
-        match token.token_type {
+        match self.peek()?.token_type {
             TokenType::Number => {
-                self.current += 1;
-                Some(Expr::new(token))
+                self.next();
+                Some(Expr::new(self.peek_back(1)?.clone()))
             }
             _ => None,
         }

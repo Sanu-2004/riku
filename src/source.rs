@@ -37,6 +37,8 @@ impl Source {
                 '/' => self.add_token("/", TokenType::Slash),
                 '\n' => self.eat_char(&['\n']),
                 ' ' => self.eat_char(&[' ']),
+                '(' => self.add_token("(", TokenType::LParen),
+                ')' => self.add_token(")", TokenType::RParen),
                 '0'..='9' => self.numbers(),
                 _ => self.syntaxerror(),
             }

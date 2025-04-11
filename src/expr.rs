@@ -18,6 +18,7 @@ pub enum Expr {
     Number(f64),
     Binary(Box<Expr>, Op, Box<Expr>),
     Unary(Op, Box<Expr>),
+    Group(Box<Expr>),
 }
 
 impl Expr {
@@ -36,6 +37,10 @@ impl Expr {
                 process::exit(1);
             }
         }
+    }
+
+    pub fn new_group(expr: Expr) -> Self {
+        Expr::Group(Box::new(expr))
     }
 
     pub fn new_binary(left: Expr, op: &Token, right: Expr) -> Self {
@@ -79,6 +84,7 @@ impl Expr {
                     Self::Number(0.0)
                 }
             }
+            Self::Group(expr) => expr.eval(),
         }
     }
 }
@@ -89,6 +95,7 @@ impl fmt::Display for Expr {
             Self::Number(n) => write!(f, "{}", n),
             Self::Binary(l, op, r) => write!(f, "({} {} {})", l, op, r),
             Self::Unary(op, r) => write!(f, "({} {})", op, r),
+            Self::Group(expr) => write!(f, "{}", expr),
         }
     }
 }

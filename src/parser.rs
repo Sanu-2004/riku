@@ -1,4 +1,7 @@
+use std::process;
+
 use crate::{
+    error::{ErrorType, line_error},
     expr::Expr,
     token::{Token, TokenType},
 };
@@ -129,6 +132,25 @@ impl Parser {
             self.next();
             let right = self.expr_unary()?;
             return Some(Expr::new_unary(&op, right));
+        }
+        self.expr_group()
+    }
+
+    fn expr_group(&mut self) -> Option<Expr> {
+        if self.peek()?.token_type == TokenType::LParen {
+            self.next();
+            let expr = self.parse_expr()?;
+            if self.peek()?.token_type == TokenType::RParen {
+                self.next();
+                return Some(Expr::new_group(expr));
+            } else {
+                line_error(
+                    ErrorType::SyntaxError,
+                    self.peek_back(1)?.line,
+                    "Missing closing parenthesis".to_string(),
+                );
+                process::exit(1);
+            }
         }
         self.expr_primary()
     }

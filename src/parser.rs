@@ -44,15 +44,6 @@ impl Parser {
         }
     }
 
-    fn advance(&mut self) -> Option<&Token> {
-        if self.peek().is_some() {
-            self.next();
-            self.peek_back(1)
-        } else {
-            None
-        }
-    }
-
     pub fn get_stmts(&self) -> &Vec<Expr> {
         &self.stmts
     }
@@ -92,7 +83,54 @@ impl Parser {
     }
 
     fn parse_expr(&mut self) -> Option<Expr> {
-        self.expr_term()
+        self.expr_logic()
+    }
+
+    fn expr_logic(&mut self) -> Option<Expr> {
+        let mut left = self.expr_equality()?;
+        while self.peek()?.token_type == TokenType::Ampersand
+            || self.peek()?.token_type == TokenType::Pipe
+        {
+            let op = self.peek()?;
+            let op = op.clone();
+            self.next();
+            let right = self.expr_equality()?;
+            let expr = Expr::new_logic(left, &op, right);
+            left = expr;
+        }
+        Some(left)
+    }
+
+    fn expr_equality(&mut self) -> Option<Expr> {
+        let mut left = self.expr_relation()?;
+        while self.peek()?.token_type == TokenType::EqualEqual
+            || self.peek()?.token_type == TokenType::BangEqual
+        {
+            let op = self.peek()?;
+            let op = op.clone();
+            self.next();
+            let right = self.expr_relation()?;
+            let expr = Expr::new_logic(left, &op, right);
+            left = expr;
+        }
+        Some(left)
+    }
+
+    fn expr_relation(&mut self) -> Option<Expr> {
+        let mut left = self.expr_term()?;
+        while self.peek()?.token_type == TokenType::Less
+            || self.peek()?.token_type == TokenType::LessEqual
+            || self.peek()?.token_type == TokenType::Greater
+            || self.peek()?.token_type == TokenType::GreaterEqual
+        {
+            let op = self.peek()?;
+            let op = op.clone();
+            self.next();
+            let right = self.expr_term()?;
+            let expr = Expr::new_logic(left, &op, right);
+            left = expr;
+        }
+        Some(left)
     }
 
     fn expr_term(&mut self) -> Option<Expr> {
@@ -126,7 +164,8 @@ impl Parser {
     }
 
     fn expr_unary(&mut self) -> Option<Expr> {
-        if self.peek()?.token_type == TokenType::Minus {
+        if self.peek()?.token_type == TokenType::Minus || self.peek()?.token_type == TokenType::Bang
+        {
             let op = self.peek()?;
             let op = op.clone();
             self.next();
@@ -161,7 +200,18 @@ impl Parser {
                 self.next();
                 Some(Expr::new(self.peek_back(1)?.clone()))
             }
-            _ => None,
+            TokenType::True | TokenType::False => {
+                self.next();
+                Some(Expr::new(self.peek_back(1)?.clone()))
+            }
+            _ => {
+                line_error(
+                    ErrorType::SyntaxError,
+                    self.peek_back(1)?.line,
+                    format!("Unexpected token `{}`", self.peek()?.lexeme),
+                );
+                process::exit(1);
+            }
         }
     }
 }

@@ -36,14 +36,77 @@ impl Source {
                 '*' => self.add_token("*", TokenType::Star),
                 '/' => self.add_token("/", TokenType::Slash),
                 '\n' => self.eat_char(&['\n']),
+                ';' => self.add_token(";", TokenType::EOL),
                 ' ' => self.eat_char(&[' ']),
                 '(' => self.add_token("(", TokenType::LParen),
                 ')' => self.add_token(")", TokenType::RParen),
+                '&' => self.add_token("&", TokenType::Ampersand),
+                '|' => self.add_token("|", TokenType::Pipe),
+                '<' => {
+                    if self.peek_next() == Some('=') {
+                        self.advance();
+                        self.add_token("<=", TokenType::LessEqual);
+                    } else {
+                        self.add_token("<", TokenType::Less);
+                    }
+                }
+                '>' => {
+                    if self.peek_next() == Some('=') {
+                        self.advance();
+                        self.add_token(">=", TokenType::GreaterEqual);
+                    } else {
+                        self.add_token(">", TokenType::Greater);
+                    }
+                }
+                '=' => {
+                    if self.peek_next() == Some('=') {
+                        self.advance();
+                        self.add_token("==", TokenType::EqualEqual);
+                    } else {
+                        todo!();
+                    }
+                }
+                '!' => {
+                    if self.peek_next() == Some('=') {
+                        self.advance();
+                        self.add_token("!=", TokenType::BangEqual);
+                    } else {
+                        self.add_token("!", TokenType::Bang);
+                    }
+                }
                 '0'..='9' => self.numbers(),
+                _ if c.is_alphabetic() => self.identifier(),
                 _ => self.syntaxerror(),
             }
         }
         self.add_token("", TokenType::EOF);
+    }
+
+    fn identifier(&mut self) {
+        let start = self.position;
+        while let Some(c) = self.peek() {
+            if c.is_alphanumeric() || c == '_' {
+                self.advance();
+            } else {
+                break;
+            }
+        }
+        let lexeme = &self.input[start..self.position];
+        let token_type = match lexeme {
+            "true" => TokenType::True,
+            "false" => TokenType::False,
+            _ => {
+                line_error(
+                    ErrorType::SyntaxError,
+                    self.line,
+                    format!("Unexpeted identifier `{}`", lexeme),
+                );
+                process::exit(1);
+            }
+        };
+        let token = Token::new(lexeme.trim(), self.line, token_type);
+        self.tokens.push(token);
+        self.eat_char(&[' ']);
     }
 
     fn syntaxerror(&self) {
@@ -64,6 +127,14 @@ impl Source {
     pub fn peek(&self) -> Option<char> {
         if self.position < self.input.len() {
             Some(self.input[self.position..].chars().next().unwrap())
+        } else {
+            None
+        }
+    }
+
+    pub fn peek_next(&self) -> Option<char> {
+        if self.position < self.input.len() {
+            self.input[self.position..].chars().skip(1).next()
         } else {
             None
         }

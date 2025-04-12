@@ -2,6 +2,7 @@ pub mod error;
 mod expr;
 pub mod parser;
 pub mod source;
+mod stmt;
 mod token;
 
 pub fn run_file(_source: &str) {

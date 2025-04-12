@@ -1,19 +1,7 @@
 use kire::{parser::Parser, source::Source};
 
 fn main() {
-    let input = r#"
-            !true == false
-            1 + 2 * 3
-            1 + 2 * 3 == 7
-            1 + 2 * 3 == 7 & 1 + 2 * 4 > 7
-            1 + 2 * 3 == 7 & 1 + 2 * 4 != 7 | 1 + 2 * 3 == 7
-            (1 + 2) * (3 + 4)
-            (1 + 2) * (3 + 4) == 3*3 + 3*4
-            (1 + 2) * (3 + 4) == 1*3 + 2*4 & 1 + 2 * 3 == 7
-            (1 + 2) * (3 + 4) == 1*3 + 2*4 & 1 + 2 * 3 == 7 | 1 + 2 * 3 == 7
-            1 + 2 * 3 == 7 & 1 + 2 * 4 != 7 | 1 + 2 * 3 == 7
-            (1 + 2) * (3 + 4) == (1+4) * (3 + 2)
-            "#;
+    let input = r#" let a = 5+7"#;
 
     let mut source = Source::new(input.to_string());
     source.tokenize();
@@ -21,11 +9,11 @@ fn main() {
     let mut parser = Parser::new(source.get_tokens());
     parser.parse();
 
-    // dbg!(source.get_tokens());
-    // dbg!(parser.get_stmts());
-    for expr in parser.get_stmts() {
-        println!("{} = {}", expr, expr.eval());
-    }
+    dbg!(source.get_tokens());
+    dbg!(parser.get_stmts());
+    // for expr in parser.get_stmts() {
+    //     println!("{} = {}", expr, expr.eval());
+    // }
 }
 
 // use kire::{run_cli, run_file};

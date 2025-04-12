@@ -63,7 +63,7 @@ impl Source {
                         self.advance();
                         self.add_token("==", TokenType::EqualEqual);
                     } else {
-                        todo!();
+                        self.add_token("=", TokenType::Equal);
                     }
                 }
                 '!' => {
@@ -95,14 +95,8 @@ impl Source {
         let token_type = match lexeme {
             "true" => TokenType::True,
             "false" => TokenType::False,
-            _ => {
-                line_error(
-                    ErrorType::SyntaxError,
-                    self.line,
-                    format!("Unexpeted identifier `{}`", lexeme),
-                );
-                process::exit(1);
-            }
+            "let" => TokenType::Let,
+            _ => TokenType::Ident,
         };
         let token = Token::new(lexeme.trim(), self.line, token_type);
         self.tokens.push(token);

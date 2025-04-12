@@ -3,6 +3,7 @@ use std::process;
 use crate::{
     error::{ErrorType, line_error},
     expr::Expr,
+    stmt::Stmt,
     token::{Token, TokenType},
 };
 
@@ -10,7 +11,7 @@ use crate::{
 pub struct Parser {
     tokens: Vec<Token>,
     current: usize,
-    stmts: Vec<Expr>,
+    stmts: Vec<Stmt>,
 }
 
 impl Parser {
@@ -38,13 +39,39 @@ impl Parser {
         }
     }
 
+    fn advance(&mut self) -> Option<&Token> {
+        if self.current < self.tokens.len() {
+            self.current += 1;
+            self.peek_back(1)
+        } else {
+            None
+        }
+    }
+
+    fn check(&mut self, s: &str) -> bool {
+        if self.current < self.tokens.len() {
+            if self.peek().unwrap().lexeme == s {
+                return true;
+            }
+        }
+        false
+    }
+
+    fn check1(&mut self, s: &str) -> Result<(), ErrorType> {
+        if self.check(s) {
+            Ok(())
+        } else {
+            Err(ErrorType::SyntaxError)
+        }
+    }
+
     fn next(&mut self) {
         if self.current < self.tokens.len() {
             self.current += 1;
         }
     }
 
-    pub fn get_stmts(&self) -> &Vec<Expr> {
+    pub fn get_stmts(&self) -> &Vec<Stmt> {
         &self.stmts
     }
 
@@ -53,12 +80,12 @@ impl Parser {
     }
 
     fn parse_eof(&mut self) {
-        let (exprs, _) = self.parse_till(TokenType::EOF);
-        self.stmts = exprs;
+        let (stmts, _) = self.parse_till(TokenType::EOF);
+        self.stmts = stmts;
     }
 
-    fn parse_till(&mut self, till: TokenType) -> (Vec<Expr>, bool) {
-        let mut exprs = Vec::new();
+    fn parse_till(&mut self, till: TokenType) -> (Vec<Stmt>, bool) {
+        let mut stmts = Vec::new();
         let mut found = false;
         while let Some(t) = self.peek() {
             if t.token_type == till {
@@ -70,16 +97,57 @@ impl Parser {
                     self.next();
                     continue;
                 }
+                TokenType::Let => {
+                    let stmt = self.parse_let();
+                    stmts.push(stmt);
+                }
                 _ => {
                     let Some(expr) = self.parse_expr() else {
-                        return (exprs, found);
+                        return (stmts, found);
                     };
-                    exprs.push(expr);
+                    stmts.push(Stmt::Expr(expr));
                 }
             }
             self.next()
         }
-        (exprs, found)
+        (stmts, found)
+    }
+
+    fn parse_let(&mut self) -> Stmt {
+        self.next();
+        let name = self.advance().unwrap();
+        let name = name.clone();
+        if name.token_type != TokenType::Ident {
+            line_error(
+                ErrorType::SyntaxError,
+                name.line,
+                format!("Expected identifier, found `{}`", name.lexeme),
+            );
+            process::exit(1);
+        }
+        if self.check1("=").is_err() {
+            line_error(
+                ErrorType::SyntaxError,
+                name.line,
+                format!("Expected `=`, found `{}`", self.peek().unwrap().lexeme),
+            );
+            process::exit(1);
+        }
+        self.next();
+        let expr = self.parse_expr();
+        if expr.is_none() {
+            line_error(
+                ErrorType::SyntaxError,
+                name.line,
+                format!(
+                    "Expected expression, found `{}`",
+                    self.peek().unwrap().lexeme
+                ),
+            );
+            process::exit(1);
+        }
+        let expr = expr.unwrap();
+        Stmt::Let(name, expr)
     }
 
     fn parse_expr(&mut self) -> Option<Expr> {

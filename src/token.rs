@@ -22,6 +22,8 @@ pub enum TokenType {
     Ampersand,
     Pipe,
     Let,
+    If,
+    Else,
     Print,
     Ident,
     True,

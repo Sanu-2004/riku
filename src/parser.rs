@@ -121,6 +121,10 @@ impl Parser {
                     let stmt = self.parse_print();
                     stmts.push(stmt);
                 }
+                TokenType::If => {
+                    let stmt = self.parse_if();
+                    stmts.push(stmt);
+                }
                 _ => {
                     let Some(expr) = self.parse_expr() else {
                         return (stmts, found);
@@ -131,6 +135,52 @@ impl Parser {
             self.next()
         }
         (stmts, found)
+    }
+
+    fn parse_if(&mut self) -> Stmt {
+        let line = self.peek().unwrap().line;
+        self.next();
+        let condition = match self.parse_expr() {
+            Some(e) => e,
+            None => {
+                line_error(
+                    ErrorType::SyntaxError,
+                    line,
+                    format!("Expected expression, after `if`"),
+                );
+                process::exit(1);
+            }
+        };
+        let then = match self.peek() {
+            Some(t) if t.token_type == TokenType::LBrace => self.parse_brace(),
+            _ => {
+                line_error(
+                    ErrorType::SyntaxError,
+                    line,
+                    format!("Expected {{ and }}, after `if`"),
+                );
+                process::exit(1);
+            }
+        };
+        self.next();
+        let else_stmt = match self.peek() {
+            Some(t) if t.token_type == TokenType::Else => {
+                self.next();
+                match self.peek() {
+                    Some(t) if t.token_type == TokenType::LBrace => Some(self.parse_brace()),
+                    _ => {
+                        line_error(
+                            ErrorType::SyntaxError,
+                            line,
+                            format!("Expected {{ and }}, after `else`"),
+                        );
+                        process::exit(1);
+                    }
+                }
+            }
+            _ => None,
+        };
+        Stmt::If(condition, Box::new(then), else_stmt.map(Box::new))
     }
 
     fn parse_print(&mut self) -> Stmt {

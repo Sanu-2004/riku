@@ -87,6 +87,20 @@ impl Expr {
         Expr::Unary(op, Box::new(right))
     }
 
+    pub fn condition_eval(&self, env: &Env) -> bool {
+        match self.eval(env) {
+            Value::Bool(b) => b,
+            Value::Number(n) => n > 0.0,
+            _ => {
+                error(
+                    ErrorType::TypeError,
+                    "Invalid condition, expected boolean or number".to_string(),
+                );
+                false
+            }
+        }
+    }
+
     pub fn eval(&self, env: &Env) -> Value {
         match self {
             Self::Number(n) => Value::Number(*n),
@@ -228,15 +242,39 @@ impl Op {
                 let res = self.logic_num(*l, *r);
                 Value::Bool(res)
             }
+            (Value::String(l), Value::String(r)) => {
+                let res = self.logic_string(l.clone(), r.clone());
+                Value::Bool(res)
+            }
             _ => {
                 error(
                     ErrorType::TypeError,
                     format!(
-                        "Invalid Operator: `{:?}` and `{:?}` must be a number or boolean",
+                        "Invalid Comparison Type: `{}` and `{}` both must be same type",
                         l, r
                     ),
                 );
                 Value::Number(0.0)
+            }
+        }
+    }
+
+    fn logic_string(&self, l: String, r: String) -> bool {
+        match self {
+            Op::And => !l.is_empty() && !r.is_empty(),
+            Op::Or => !l.is_empty() || !r.is_empty(),
+            Op::Eq => l == r,
+            Op::Ne => l != r,
+            Op::Gt => l > r,
+            Op::Ge => l >= r,
+            Op::Lt => l < r,
+            Op::Le => l <= r,
+            _ => {
+                error(
+                    ErrorType::TypeError,
+                    format!("Invalid operator `{}` for string", self),
+                );
+                false
             }
         }
     }

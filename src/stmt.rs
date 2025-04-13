@@ -11,6 +11,7 @@ pub enum Stmt {
     Assign(Token, Expr),
     Group(Vec<Stmt>),
     Print(Vec<Expr>),
+    If(Expr, Box<Stmt>, Option<Box<Stmt>>),
 }
 
 impl Stmt {
@@ -38,6 +39,13 @@ impl Stmt {
                     print!("{}", expr.eval(&env.borrow()));
                 }
                 println!();
+            }
+            Stmt::If(con, then, else_stmt) => {
+                if con.condition_eval(&env.borrow()) {
+                    then.eval(env);
+                } else if let Some(else_stmt) = else_stmt {
+                    else_stmt.eval(env);
+                }
             }
         }
     }

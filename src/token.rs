@@ -29,7 +29,7 @@ pub enum TokenType {
     Ident,
     True,
     False,
-
+    Int,
     EOL,
     EOF,
 }

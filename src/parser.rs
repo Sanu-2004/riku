@@ -324,6 +324,29 @@ impl Parser {
         Stmt::Let(name, expr)
     }
 
+    fn parse_int(&mut self) -> Expr {
+        let line = self.peek().unwrap().line;
+        self.next();
+        if self.peek().is_some() {
+            if self.peek().unwrap().token_type == TokenType::LParen {
+                let expr = self.parse_expr();
+                self.next();
+                if let Some(exp) = expr {
+                    return exp;
+                }
+            }
+        }
+        line_error(
+            ErrorType::SyntaxError,
+            line,
+            format!(
+                "Expected expression, found `{}`",
+                self.peek().unwrap().lexeme
+            ),
+        );
+        process::exit(1);
+    }
+
     fn parse_expr(&mut self) -> Option<Expr> {
         self.expr_logic()
     }
@@ -457,6 +480,10 @@ impl Parser {
             TokenType::Input => {
                 let print_stmt = self.parse_print();
                 Some(Expr::new_input(print_stmt))
+            }
+            TokenType::Int => {
+                let expr = self.parse_int();
+                Some(Expr::new_int(expr))
             }
             TokenType::EOF => None,
             _ => {

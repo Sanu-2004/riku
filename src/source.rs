@@ -127,6 +127,7 @@ impl Source {
             "if" => TokenType::If,
             "else" => TokenType::Else,
             "input" => TokenType::Input,
+            "int" => TokenType::Int,
             _ => TokenType::Ident,
         };
         let token = Token::new(lexeme.trim(), self.line, token_type);

@@ -35,6 +35,7 @@ pub enum Expr {
     Group(Box<Expr>),
     Variable(Token),
     Input(Box<Stmt>),
+    Int(Box<Expr>),
 }
 
 impl Expr {
@@ -57,6 +58,10 @@ impl Expr {
                 process::exit(1);
             }
         }
+    }
+
+    pub fn new_int(expr: Expr) -> Self {
+        Expr::Int(Box::new(expr))
     }
 
     pub fn new_input(stmt: Stmt) -> Self {
@@ -139,6 +144,23 @@ impl Expr {
                 let value = Value::String(input.trim().to_string());
                 value
             }
+            Self::Int(n) => match n.eval(env) {
+                Value::Number(_) => self.eval(env),
+                Value::String(s) => {
+                    let num = s.parse::<f64>().unwrap_or_else(|_| {
+                        error(
+                            ErrorType::TypeError,
+                            format!("Invalid string `{}` for int", s),
+                        );
+                        0.0
+                    });
+                    Value::Number(num)
+                }
+                Value::Bool(b) => {
+                    let num = if b { 1.0 } else { 0.0 };
+                    Value::Number(num)
+                }
+            },
         }
     }
 }
@@ -155,6 +177,7 @@ impl fmt::Display for Expr {
             Self::Variable(t) => write!(f, "{}", t.lexeme),
             Self::String(s) => write!(f, "{}", s),
             Self::Input(_) => write!(f, "Input box"),
+            Self::Int(_) => write!(f, "Int box"),
         }
     }
 }

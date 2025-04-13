@@ -2,8 +2,8 @@ use kire::{env::Env, parser::Parser, source::Source};
 
 fn main() {
     let input = r#"
-        let c = input("Enter your age: ");
-        if c >= "18" {
+        let c = int(input("Enter your age: "));
+        if c >= 18 {
             print("You are an adult.");
         } else {
             print("You are a minor.");
@@ -23,7 +23,7 @@ fn main() {
     for stmt in parser.get_stmts() {
         stmt.eval(&mut env);
     }
-    // dbg!(env);
+    dbg!(env);
 }
 
 // use kire::{run_cli, run_file};

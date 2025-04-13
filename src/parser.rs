@@ -113,6 +113,10 @@ impl Parser {
                     let stmt = self.parse_ident();
                     stmts.push(stmt);
                 }
+                TokenType::LBrace => {
+                    let stmt = self.parse_brace();
+                    stmts.push(stmt);
+                }
                 _ => {
                     let Some(expr) = self.parse_expr() else {
                         return (stmts, found);
@@ -123,6 +127,21 @@ impl Parser {
             self.next()
         }
         (stmts, found)
+    }
+
+    fn parse_brace(&mut self) -> Stmt {
+        let line = self.peek().unwrap().line;
+        self.next();
+        let (stmts, found) = self.parse_till(TokenType::RBrace);
+        if !found {
+            line_error(
+                ErrorType::SyntaxError,
+                line,
+                format!("Missing closing for the starting brace"),
+            );
+            process::exit(1);
+        }
+        Stmt::Group(stmts)
     }
 
     fn parse_ident(&mut self) -> Stmt {
@@ -317,7 +336,9 @@ impl Parser {
                 self.next();
                 Some(Expr::new(self.peek_back(1)?.clone()))
             }
+            TokenType::EOF => None,
             _ => {
+                dbg!(self.peek());
                 line_error(
                     ErrorType::SyntaxError,
                     self.peek_back(1)?.line,

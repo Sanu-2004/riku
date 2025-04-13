@@ -40,6 +40,8 @@ impl Source {
                 ' ' => self.eat_char(&[' ']),
                 '(' => self.add_token("(", TokenType::LParen),
                 ')' => self.add_token(")", TokenType::RParen),
+                '{' => self.add_token("{", TokenType::LBrace),
+                '}' => self.add_token("}", TokenType::RBrace),
                 '&' => self.add_token("&", TokenType::Ampersand),
                 '|' => self.add_token("|", TokenType::Pipe),
                 '<' => {

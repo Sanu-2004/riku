@@ -1,9 +1,14 @@
 use kire::{env::Env, parser::Parser, source::Source};
 
 fn main() {
-    let input = r#" let a = 2+2
-        a = a +1
-        a"#;
+    let input = r#"
+        let a = 1
+        {
+        let b = 2
+        let c = 3
+        }
+        b = 6
+        "#;
 
     let mut source = Source::new(input.to_string());
     source.tokenize();
@@ -13,8 +18,8 @@ fn main() {
 
     let mut env = Env::new();
 
-    dbg!(source.get_tokens());
-    dbg!(parser.get_stmts());
+    // dbg!(source.get_tokens());
+    // dbg!(parser.get_stmts());
     for stmt in parser.get_stmts() {
         stmt.eval(&mut env);
     }

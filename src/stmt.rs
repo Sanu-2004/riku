@@ -1,4 +1,4 @@
-use crate::env::{Env, Value};
+use crate::env::Env;
 use crate::expr::Expr;
 use crate::token::Token;
 use std::cell::RefCell;
@@ -9,6 +9,7 @@ pub enum Stmt {
     Expr(Expr),
     Let(Token, Expr),
     Assign(Token, Expr),
+    Group(Vec<Stmt>),
 }
 
 impl Stmt {
@@ -24,6 +25,12 @@ impl Stmt {
             Stmt::Assign(token, expr) => {
                 let value = expr.eval(&env.borrow());
                 env.borrow_mut().assign(token.lexeme.clone(), value);
+            }
+            Stmt::Group(stmts) => {
+                let mut child_env = Env::child_env(env.clone());
+                for stmt in stmts {
+                    stmt.eval(&mut child_env);
+                }
             }
         }
     }

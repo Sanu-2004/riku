@@ -1,9 +1,6 @@
 use std::{cell::RefCell, collections::HashMap, process, rc::Rc};
 
-use crate::{
-    error::{ErrorType, error},
-    expr::Expr,
-};
+use crate::error::{ErrorType, error};
 
 #[derive(Debug, Clone)]
 pub enum Value {
@@ -28,7 +25,7 @@ impl Env {
     pub fn child_env(parent: Rc<RefCell<Self>>) -> Rc<RefCell<Self>> {
         Rc::new(RefCell::new(Env {
             map: HashMap::new(),
-            parent: Some(parent),
+            parent: Some(parent.clone()),
         }))
     }
 

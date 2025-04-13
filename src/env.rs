@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::HashMap, process, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, fmt, process, rc::Rc};
 
 use crate::error::{ErrorType, error};
 
@@ -7,6 +7,16 @@ pub enum Value {
     Number(f64),
     Bool(bool),
     String(String),
+}
+
+impl fmt::Display for Value {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Value::Number(n) => write!(f, "{}", n),
+            Value::Bool(b) => write!(f, "{}", b),
+            Value::String(s) => write!(f, "{}", s),
+        }
+    }
 }
 
 #[derive(Debug)]

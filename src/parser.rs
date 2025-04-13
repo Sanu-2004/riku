@@ -117,6 +117,10 @@ impl Parser {
                     let stmt = self.parse_brace();
                     stmts.push(stmt);
                 }
+                TokenType::Print => {
+                    let stmt = self.parse_print();
+                    stmts.push(stmt);
+                }
                 _ => {
                     let Some(expr) = self.parse_expr() else {
                         return (stmts, found);
@@ -127,6 +131,66 @@ impl Parser {
             self.next()
         }
         (stmts, found)
+    }
+
+    fn parse_print(&mut self) -> Stmt {
+        let line = self.peek().unwrap().line;
+        self.next();
+        if let Some(token) = self.peek() {
+            let token = token.clone();
+            if token.token_type == TokenType::LParen {
+                self.next();
+                let mut found = false;
+                let mut exprs = Vec::new();
+                while let Some(token) = self.peek() {
+                    if token.token_type == TokenType::RParen {
+                        found = true;
+                        break;
+                    }
+                    if let Some(expr) = self.parse_expr() {
+                        exprs.push(expr);
+                    } else {
+                        line_error(
+                            ErrorType::SyntaxError,
+                            line,
+                            format!(
+                                "Expected expression, found `{}`",
+                                self.peek().unwrap().lexeme
+                            ),
+                        );
+                        process::exit(1);
+                    }
+                    match self.peek() {
+                        Some(t) if t.token_type == TokenType::Comma => {
+                            self.next();
+                        }
+                        Some(t) if t.token_type == TokenType::RParen => {
+                            found = true;
+                            break;
+                        }
+                        _ => {
+                            break;
+                        }
+                    }
+                }
+                if !found {
+                    line_error(
+                        ErrorType::SyntaxError,
+                        token.line,
+                        format!("Expected `)` or `,` in the statement"),
+                    );
+                    process::exit(1);
+                }
+                self.next();
+                return Stmt::Print(exprs);
+            }
+        }
+        line_error(
+            ErrorType::SyntaxError,
+            line,
+            format!("Expected `(`, after the print statement"),
+        );
+        process::exit(1);
     }
 
     fn parse_brace(&mut self) -> Stmt {

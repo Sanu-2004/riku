@@ -37,6 +37,7 @@ impl Source {
                 '/' => self.add_token("/", TokenType::Slash),
                 '\n' => self.eat_char(&['\n']),
                 ';' => self.add_token(";", TokenType::EOL),
+                ',' => self.add_token(",", TokenType::Comma),
                 ' ' => self.eat_char(&[' ']),
                 '(' => self.add_token("(", TokenType::LParen),
                 ')' => self.add_token(")", TokenType::RParen),
@@ -102,7 +103,7 @@ impl Source {
             self.advance();
         }
         let lexeme = &self.input[start..self.position];
-        let token = Token::new(lexeme.trim(), self.line, TokenType::String);
+        let token = Token::new(lexeme, self.line, TokenType::String);
         self.tokens.push(token);
         self.advance();
         self.eat_char(&[' ']);
@@ -122,6 +123,7 @@ impl Source {
             "true" => TokenType::True,
             "false" => TokenType::False,
             "let" => TokenType::Let,
+            "print" => TokenType::Print,
             _ => TokenType::Ident,
         };
         let token = Token::new(lexeme.trim(), self.line, token_type);

@@ -10,6 +10,7 @@ pub enum Stmt {
     Let(Token, Expr),
     Assign(Token, Expr),
     Group(Vec<Stmt>),
+    Print(Vec<Expr>),
 }
 
 impl Stmt {
@@ -31,6 +32,12 @@ impl Stmt {
                 for stmt in stmts {
                     stmt.eval(&mut child_env);
                 }
+            }
+            Stmt::Print(exprs) => {
+                for expr in exprs {
+                    print!("{}", expr.eval(&env.borrow()));
+                }
+                println!();
             }
         }
     }

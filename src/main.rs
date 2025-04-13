@@ -2,7 +2,10 @@ use kire::{env::Env, parser::Parser, source::Source};
 
 fn main() {
     let input = r#"
-        let a = "hello, world!";
+        let a = 1;
+        let b = "hello world"
+        print("a + 1 is -> ", a +1)
+        print("b is -> ", b)
         "#;
 
     let mut source = Source::new(input.to_string());
@@ -18,7 +21,7 @@ fn main() {
     for stmt in parser.get_stmts() {
         stmt.eval(&mut env);
     }
-    dbg!(env);
+    // dbg!(env);
 }
 
 // use kire::{run_cli, run_file};

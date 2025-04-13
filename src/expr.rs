@@ -27,6 +27,7 @@ pub enum Op {
 pub enum Expr {
     Number(f64),
     Bool(bool),
+    String(String),
     Binary(Box<Expr>, Op, Box<Expr>),
     Logic(Box<Expr>, Op, Box<Expr>),
     Unary(Op, Box<Expr>),
@@ -41,6 +42,7 @@ impl Expr {
                 let value = token.lexeme.parse::<f64>().unwrap_or(0.0);
                 Expr::Number(value)
             }
+            TokenType::String => Expr::String(token.lexeme),
             TokenType::True => Expr::Bool(true),
             TokenType::False => Expr::Bool(false),
             TokenType::Ident => Expr::Variable(token),
@@ -109,6 +111,7 @@ impl Expr {
                 );
                 process::exit(1);
             }),
+            Self::String(s) => Value::String(s.clone()),
         }
     }
 }
@@ -123,6 +126,7 @@ impl fmt::Display for Expr {
             Self::Bool(b) => write!(f, "{}", b),
             Self::Logic(l, op, r) => write!(f, "({} {} {})", l, op, r),
             Self::Variable(t) => write!(f, "{}", t.lexeme),
+            Self::String(s) => write!(f, "{}", s),
         }
     }
 }

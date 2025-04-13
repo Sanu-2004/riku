@@ -2,12 +2,7 @@ use kire::{env::Env, parser::Parser, source::Source};
 
 fn main() {
     let input = r#"
-        let a = 1
-        {
-        let b = 2
-        let c = 3
-        }
-        b = 6
+        let a = "hello, world!";
         "#;
 
     let mut source = Source::new(input.to_string());

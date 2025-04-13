@@ -336,9 +336,12 @@ impl Parser {
                 self.next();
                 Some(Expr::new(self.peek_back(1)?.clone()))
             }
+            TokenType::String => {
+                self.next();
+                Some(Expr::new(self.peek_back(1)?.clone()))
+            }
             TokenType::EOF => None,
             _ => {
-                dbg!(self.peek());
                 line_error(
                     ErrorType::SyntaxError,
                     self.peek_back(1)?.line,

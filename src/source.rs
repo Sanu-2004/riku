@@ -77,11 +77,35 @@ impl Source {
                     }
                 }
                 '0'..='9' => self.numbers(),
+                '"' => self.string(),
                 _ if c.is_alphabetic() => self.identifier(),
                 _ => self.syntaxerror(),
             }
         }
         self.add_token("", TokenType::EOF);
+    }
+
+    fn string(&mut self) {
+        self.advance();
+        let start = self.position;
+        while let Some(c) = self.peek() {
+            if c == '"' {
+                break;
+            } else if c == '\n' {
+                line_error(
+                    ErrorType::SyntaxError,
+                    self.line,
+                    "Unterminated string".to_string(),
+                );
+                process::exit(1);
+            }
+            self.advance();
+        }
+        let lexeme = &self.input[start..self.position];
+        let token = Token::new(lexeme.trim(), self.line, TokenType::String);
+        self.tokens.push(token);
+        self.advance();
+        self.eat_char(&[' ']);
     }
 
     fn identifier(&mut self) {

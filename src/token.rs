@@ -12,7 +12,7 @@ pub enum TokenType {
     // Semi,
     // Comma,
     // Dot,
-    // String,
+    String,
     Equal,
     EqualEqual,
     Greater,

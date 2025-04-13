@@ -6,6 +6,7 @@ use crate::error::{ErrorType, error};
 pub enum Value {
     Number(f64),
     Bool(bool),
+    String(String),
 }
 
 #[derive(Debug)]

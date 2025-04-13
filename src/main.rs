@@ -2,9 +2,9 @@ use kire::{env::Env, parser::Parser, source::Source};
 
 fn main() {
     let input = r#"
-        let a = 1;
+        let a = 0.5;
         let b = "hello world"
-        print("a + 1 is -> ", a +1)
+        print("a + 1 is -> ", a + 1)
         print("b is -> ", b)
         "#;
 

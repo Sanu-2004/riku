@@ -196,7 +196,7 @@ impl Source {
     pub fn numbers(&mut self) {
         let start = self.position;
         while let Some(c) = self.peek() {
-            if c.is_digit(10) {
+            if c.is_digit(10) || c == '.' {
                 self.advance();
             } else {
                 break;

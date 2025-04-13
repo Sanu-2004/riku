@@ -31,6 +31,14 @@ impl Parser {
         }
     }
 
+    fn peek_next(&self) -> Option<&Token> {
+        if self.current + 1 < self.tokens.len() {
+            Some(&self.tokens[self.current + 1])
+        } else {
+            None
+        }
+    }
+
     fn peek_back(&self, offset: usize) -> Option<&Token> {
         if self.current >= offset {
             Some(&self.tokens[self.current - offset])
@@ -101,6 +109,10 @@ impl Parser {
                     let stmt = self.parse_let();
                     stmts.push(stmt);
                 }
+                TokenType::Ident => {
+                    let stmt = self.parse_ident();
+                    stmts.push(stmt);
+                }
                 _ => {
                     let Some(expr) = self.parse_expr() else {
                         return (stmts, found);
@@ -111,6 +123,35 @@ impl Parser {
             self.next()
         }
         (stmts, found)
+    }
+
+    fn parse_ident(&mut self) -> Stmt {
+        if self.peek_next().is_some() {
+            if self.peek_next().unwrap().token_type == TokenType::Equal {
+                let token = self.peek().unwrap().clone();
+                return self.parse_assign(token);
+            }
+        }
+        Stmt::Expr(self.parse_expr().unwrap())
+    }
+
+    fn parse_assign(&mut self, name: Token) -> Stmt {
+        self.next(); // consume the identifier
+        self.next(); // consume the equal sign
+        let expr = self.parse_expr();
+        if expr.is_none() {
+            line_error(
+                ErrorType::SyntaxError,
+                name.line,
+                format!(
+                    "Expected expression, found `{}`",
+                    self.peek().unwrap().lexeme
+                ),
+            );
+            process::exit(1);
+        }
+        let expr = expr.unwrap();
+        Stmt::Assign(name, expr)
     }
 
     fn parse_let(&mut self) -> Stmt {
@@ -269,6 +310,10 @@ impl Parser {
                 Some(Expr::new(self.peek_back(1)?.clone()))
             }
             TokenType::True | TokenType::False => {
+                self.next();
+                Some(Expr::new(self.peek_back(1)?.clone()))
+            }
+            TokenType::Ident => {
                 self.next();
                 Some(Expr::new(self.peek_back(1)?.clone()))
             }

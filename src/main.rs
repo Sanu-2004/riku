@@ -1,7 +1,9 @@
-use kire::{parser::Parser, source::Source};
+use kire::{env::Env, parser::Parser, source::Source};
 
 fn main() {
-    let input = r#" let a = 5+7"#;
+    let input = r#" let a = 2+2
+        a = a +1
+        a"#;
 
     let mut source = Source::new(input.to_string());
     source.tokenize();
@@ -9,11 +11,14 @@ fn main() {
     let mut parser = Parser::new(source.get_tokens());
     parser.parse();
 
+    let mut env = Env::new();
+
     dbg!(source.get_tokens());
     dbg!(parser.get_stmts());
-    // for expr in parser.get_stmts() {
-    //     println!("{} = {}", expr, expr.eval());
-    // }
+    for stmt in parser.get_stmts() {
+        stmt.eval(&mut env);
+    }
+    dbg!(env);
 }
 
 // use kire::{run_cli, run_file};

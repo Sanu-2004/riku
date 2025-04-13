@@ -1,6 +1,7 @@
 use std::{fmt, process};
 
 use crate::{
+    env::{Env, Value},
     error::{ErrorType, error, line_error},
     token::{Token, TokenType},
 };
@@ -30,6 +31,7 @@ pub enum Expr {
     Logic(Box<Expr>, Op, Box<Expr>),
     Unary(Op, Box<Expr>),
     Group(Box<Expr>),
+    Variable(Token),
 }
 
 impl Expr {
@@ -41,6 +43,7 @@ impl Expr {
             }
             TokenType::True => Expr::Bool(true),
             TokenType::False => Expr::Bool(false),
+            TokenType::Ident => Expr::Variable(token),
             _ => {
                 line_error(
                     ErrorType::SyntaxError,
@@ -82,23 +85,30 @@ impl Expr {
         Expr::Unary(op, Box::new(right))
     }
 
-    pub fn eval(&self) -> Self {
+    pub fn eval(&self, env: &Env) -> Value {
         match self {
-            Self::Number(n) => Self::Number(*n),
-            Self::Bool(b) => Self::Bool(*b),
+            Self::Number(n) => Value::Number(*n),
+            Self::Bool(b) => Value::Bool(*b),
             Self::Binary(l, op, r) => {
-                let left = l.eval();
-                let right = r.eval();
+                let left = l.eval(env);
+                let right = r.eval(env);
                 let num = op.eval_binary(left, right);
-                Self::Number(num)
+                Value::Number(num)
             }
-            Self::Unary(op, r) => op.eval_unary(r.eval()),
-            Self::Group(expr) => expr.eval(),
+            Self::Unary(op, r) => op.eval_unary(r.eval(env)),
+            Self::Group(expr) => expr.eval(env),
             Self::Logic(l, op, r) => {
-                let left = l.eval();
-                let right = r.eval();
+                let left = l.eval(env);
+                let right = r.eval(env);
                 op.eval_logic(left, right)
             }
+            Self::Variable(t) => env.get(&t.lexeme).unwrap_or_else(|| {
+                error(
+                    ErrorType::RuntimeError,
+                    format!("Undefined variable `{}`", t.lexeme),
+                );
+                process::exit(1);
+            }),
         }
     }
 }
@@ -112,6 +122,7 @@ impl fmt::Display for Expr {
             Self::Group(expr) => write!(f, "({})", expr),
             Self::Bool(b) => write!(f, "{}", b),
             Self::Logic(l, op, r) => write!(f, "({} {} {})", l, op, r),
+            Self::Variable(t) => write!(f, "{}", t.lexeme),
         }
     }
 }
@@ -143,28 +154,28 @@ impl Op {
         }
     }
 
-    fn eval_unary(&self, right: Expr) -> Expr {
+    fn eval_unary(&self, right: Value) -> Value {
         match self {
             Op::Not => {
-                if let Expr::Bool(b) = right {
-                    Expr::Bool(!b)
+                if let Value::Bool(b) = right {
+                    Value::Bool(!b)
                 } else {
                     error(
                         ErrorType::TypeError,
                         "Invalid operand, expected boolean".to_string(),
                     );
-                    Expr::Bool(false)
+                    Value::Bool(false)
                 }
             }
             Op::Sub => {
-                if let Expr::Number(n) = right {
-                    Expr::Number(-n)
+                if let Value::Number(n) = right {
+                    Value::Number(-n)
                 } else {
                     error(
                         ErrorType::TypeError,
                         "Invalid operand, expected number".to_string(),
                     );
-                    Expr::Number(0.0)
+                    Value::Number(0.0)
                 }
             }
             _ => {
@@ -172,14 +183,14 @@ impl Op {
                     ErrorType::TypeError,
                     format!("Invalid unary operator `{}`", self),
                 );
-                Expr::Number(0.0)
+                Value::Number(0.0)
             }
         }
     }
 
-    fn eval_binary(&self, left: Expr, right: Expr) -> f64 {
+    fn eval_binary(&self, left: Value, right: Value) -> f64 {
         let (left, right) = match (left, right) {
-            (Expr::Number(l), Expr::Number(r)) => (l, r),
+            (Value::Number(l), Value::Number(r)) => (l, r),
             _ => {
                 error(
                     ErrorType::TypeError,
@@ -203,25 +214,25 @@ impl Op {
         }
     }
 
-    fn eval_logic(&self, l: Expr, r: Expr) -> Expr {
+    fn eval_logic(&self, l: Value, r: Value) -> Value {
         match (&l, &r) {
-            (Expr::Bool(l), Expr::Bool(r)) => {
+            (Value::Bool(l), Value::Bool(r)) => {
                 let res = self.logic_bool(*l, *r);
-                Expr::Bool(res)
+                Value::Bool(res)
             }
-            (Expr::Number(l), Expr::Number(r)) => {
+            (Value::Number(l), Value::Number(r)) => {
                 let res = self.logic_num(*l, *r);
-                Expr::Bool(res)
+                Value::Bool(res)
             }
             _ => {
                 error(
                     ErrorType::TypeError,
                     format!(
-                        "Invaild Operator: `{}` and `{}` must be a number or boolean",
+                        "Invalid Operator: `{:?}` and `{:?}` must be a number or boolean",
                         l, r
                     ),
                 );
-                Expr::Number(0.0)
+                Value::Number(0.0)
             }
         }
     }

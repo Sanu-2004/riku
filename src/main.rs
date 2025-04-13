@@ -2,11 +2,11 @@ use kire::{env::Env, parser::Parser, source::Source};
 
 fn main() {
     let input = r#"
-        let c = 18
-        if c>=18 {
-            print("You are an adult, cause you r ", c)
+        let c = input("Enter your age: ");
+        if c >= "18" {
+            print("You are an adult.");
         } else {
-            print("You are a minor, cause u r ", c)
+            print("You are a minor.");
         }
         "#;
 

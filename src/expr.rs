@@ -1,8 +1,9 @@
-use std::{fmt, process};
+use std::{cell::RefCell, fmt, process, rc::Rc};
 
 use crate::{
     env::{Env, Value},
     error::{ErrorType, error, line_error},
+    stmt::Stmt,
     token::{Token, TokenType},
 };
 
@@ -33,6 +34,7 @@ pub enum Expr {
     Unary(Op, Box<Expr>),
     Group(Box<Expr>),
     Variable(Token),
+    Input(Box<Stmt>),
 }
 
 impl Expr {
@@ -55,6 +57,10 @@ impl Expr {
                 process::exit(1);
             }
         }
+    }
+
+    pub fn new_input(stmt: Stmt) -> Self {
+        Expr::Input(Box::new(stmt))
     }
 
     pub fn new_group(expr: Expr) -> Self {
@@ -87,7 +93,7 @@ impl Expr {
         Expr::Unary(op, Box::new(right))
     }
 
-    pub fn condition_eval(&self, env: &Env) -> bool {
+    pub fn condition_eval(&self, env: &mut Rc<RefCell<Env>>) -> bool {
         match self.eval(env) {
             Value::Bool(b) => b,
             Value::Number(n) => n > 0.0,
@@ -101,7 +107,7 @@ impl Expr {
         }
     }
 
-    pub fn eval(&self, env: &Env) -> Value {
+    pub fn eval(&self, env: &mut Rc<RefCell<Env>>) -> Value {
         match self {
             Self::Number(n) => Value::Number(*n),
             Self::Bool(b) => Value::Bool(*b),
@@ -118,7 +124,7 @@ impl Expr {
                 let right = r.eval(env);
                 op.eval_logic(left, right)
             }
-            Self::Variable(t) => env.get(&t.lexeme).unwrap_or_else(|| {
+            Self::Variable(t) => env.borrow().get(&t.lexeme).unwrap_or_else(|| {
                 error(
                     ErrorType::RuntimeError,
                     format!("Undefined variable `{}`", t.lexeme),
@@ -126,6 +132,13 @@ impl Expr {
                 process::exit(1);
             }),
             Self::String(s) => Value::String(s.clone()),
+            Self::Input(stmt) => {
+                let mut input = String::new();
+                stmt.eval(env);
+                std::io::stdin().read_line(&mut input).unwrap();
+                let value = Value::String(input.trim().to_string());
+                value
+            }
         }
     }
 }
@@ -141,6 +154,7 @@ impl fmt::Display for Expr {
             Self::Logic(l, op, r) => write!(f, "({} {} {})", l, op, r),
             Self::Variable(t) => write!(f, "{}", t.lexeme),
             Self::String(s) => write!(f, "{}", s),
+            Self::Input(_) => write!(f, "Input box"),
         }
     }
 }

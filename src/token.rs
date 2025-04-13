@@ -25,9 +25,11 @@ pub enum TokenType {
     If,
     Else,
     Print,
+    Input,
     Ident,
     True,
     False,
+
     EOL,
     EOF,
 }

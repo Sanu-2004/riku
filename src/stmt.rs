@@ -18,14 +18,14 @@ impl Stmt {
     pub fn eval(&self, env: &mut Rc<RefCell<Env>>) {
         match self {
             Stmt::Expr(expr) => {
-                expr.eval(&env.borrow());
+                expr.eval(env);
             }
             Stmt::Let(token, expr) => {
-                let value = expr.eval(&env.borrow());
+                let value = expr.eval(env);
                 env.borrow_mut().define(token.lexeme.clone(), value);
             }
             Stmt::Assign(token, expr) => {
-                let value = expr.eval(&env.borrow());
+                let value = expr.eval(env);
                 env.borrow_mut().assign(token.lexeme.clone(), value);
             }
             Stmt::Group(stmts) => {
@@ -36,12 +36,12 @@ impl Stmt {
             }
             Stmt::Print(exprs) => {
                 for expr in exprs {
-                    print!("{}", expr.eval(&env.borrow()));
+                    print!("{}", expr.eval(env));
                 }
                 println!();
             }
             Stmt::If(con, then, else_stmt) => {
-                if con.condition_eval(&env.borrow()) {
+                if con.condition_eval(env) {
                     then.eval(env);
                 } else if let Some(else_stmt) = else_stmt {
                     else_stmt.eval(env);

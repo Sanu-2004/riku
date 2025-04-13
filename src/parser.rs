@@ -454,6 +454,10 @@ impl Parser {
                 self.next();
                 Some(Expr::new(self.peek_back(1)?.clone()))
             }
+            TokenType::Input => {
+                let print_stmt = self.parse_print();
+                Some(Expr::new_input(print_stmt))
+            }
             TokenType::EOF => None,
             _ => {
                 line_error(

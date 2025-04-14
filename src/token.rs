@@ -4,6 +4,7 @@ pub enum TokenType {
     Plus,
     Minus,
     Star,
+    Modulo,
     Slash,
     LParen,
     RParen,
@@ -32,6 +33,7 @@ pub enum TokenType {
     Int,
     While,
     Break,
+    Continue,
     EOL,
     EOF,
 }

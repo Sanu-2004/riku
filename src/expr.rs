@@ -13,6 +13,7 @@ pub enum Op {
     Sub,
     Mul,
     Div,
+    Mod,
     And,
     Or,
     Not,
@@ -189,6 +190,7 @@ impl Op {
             TokenType::Minus => Op::Sub,
             TokenType::Star => Op::Mul,
             TokenType::Slash => Op::Div,
+            TokenType::Modulo => Op::Mod,
             TokenType::Ampersand => Op::And,
             TokenType::Pipe => Op::Or,
             TokenType::Bang => Op::Not,
@@ -259,6 +261,7 @@ impl Op {
             Op::Sub => left - right,
             Op::Mul => left * right,
             Op::Div => left / right,
+            Op::Mod => left % right,
             _ => {
                 error(
                     ErrorType::TypeError,
@@ -364,6 +367,7 @@ impl fmt::Display for Op {
             Self::Sub => write!(f, "-"),
             Self::Mul => write!(f, "*"),
             Self::Div => write!(f, "/"),
+            Self::Mod => write!(f, "%"),
             Self::And => write!(f, "&"),
             Self::Or => write!(f, "|"),
             Self::Not => write!(f, "!"),

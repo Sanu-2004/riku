@@ -2,6 +2,7 @@ use std::io::Write;
 
 use parser::Parser;
 use source::Source;
+use stmt::ControlFlow;
 
 pub mod env;
 pub mod error;
@@ -47,7 +48,7 @@ pub fn run_cli() {
         let mut parser = Parser::new(source.get_tokens());
         parser.parse();
         for stmt in parser.get_stmts() {
-            if let Some(res) = stmt.eval(&mut env) {
+            if let ControlFlow::Value(res) = stmt.eval(&mut env) {
                 println!("{}", res);
             }
         }

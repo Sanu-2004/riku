@@ -125,6 +125,12 @@ impl Parser {
                     let stmt = self.parse_if();
                     stmts.push(stmt);
                 }
+                TokenType::Break => {
+                    stmts.push(Stmt::Break);
+                }
+                TokenType::Continue => {
+                    stmts.push(Stmt::Continue);
+                }
                 TokenType::While => {
                     let stmt = self.parse_while();
                     stmts.push(stmt);
@@ -452,6 +458,7 @@ impl Parser {
         let mut left = self.expr_unary()?;
         while self.peek()?.token_type == TokenType::Star
             || self.peek()?.token_type == TokenType::Slash
+            || self.peek()?.token_type == TokenType::Modulo
         {
             let op = self.peek()?;
             let op = op.clone();

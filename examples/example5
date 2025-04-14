@@ -1,0 +1,16 @@
+print("Prime number checker")
+let n = int(input("Enter a number: "))
+let i = 2
+let flag = true
+while i <= n/2 {
+    if n % i == 0 {
+        flag = false
+        break
+    }
+    i = i + 1
+}
+if flag {
+    print(n, " is a prime number")
+} else {
+    print(n, " is not a prime number")
+}

@@ -14,7 +14,7 @@ We welcome contributions to the Riku project! Here are some ways you can contrib
 2. Clone your forked repository:
 
    ```sh
-   git clone https://github.com/yourusername/riku.git
+   git clone https://github.com/Sanu-2004/riku.git
    cd riku
    ```
 

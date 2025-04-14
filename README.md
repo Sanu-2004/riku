@@ -37,8 +37,8 @@ Riku is a simple interpreted programming language designed for educational purpo
 1. Clone the repository:
 
    ```sh
-   git clone https://github.com/yourusername/kire.git
-   cd kire
+   git clone https://github.com/Sanu-2004/riku.git
+   cd riku
    ```
 
 2. Build the project:
@@ -75,7 +75,7 @@ In CLI mode, you can type and execute Riku commands directly. To exit the CLI, t
 
 Here is an example Riku script:
 
-```kire
+```riku
 let a = 1;
 while a < 10 {
     print(a)
@@ -83,10 +83,10 @@ while a < 10 {
 }
 ```
 
-Save this script to a file (e.g., `example.kire`) and run it using the interpreter:
+Save this script to a file (e.g., `example.riku`) and run it using the interpreter:
 
 ```sh
-cargo run --release example.kire
+cargo run --release example.riku
 ```
 
 ## Language Syntax
@@ -95,7 +95,7 @@ cargo run --release example.kire
 
 Variables can be declared using the `let` keyword and assigned values using the `=` operator.
 
-```kire
+```riku
 let x = 10;
 x = x + 5;
 ```
@@ -104,7 +104,7 @@ x = x + 5;
 
 Riku supports basic arithmetic operations: `+`, `-`, `*`, `/`.
 
-```kire
+```riku
 let result = (5 + 3) * 2;
 ```
 
@@ -112,7 +112,7 @@ let result = (5 + 3) * 2;
 
 Riku supports logical operations: `&` (and), `|` (or), `!` (not).
 
-```kire
+```riku
 let is_true = true & false;
 ```
 
@@ -120,7 +120,7 @@ let is_true = true & false;
 
 Riku supports comparison operations: `==`, `!=`, `>`, `>=`, `<`, `<=`.
 
-```kire
+```riku
 let is_equal = 5 == 5;
 ```
 
@@ -128,7 +128,7 @@ let is_equal = 5 == 5;
 
 Riku supports `if` and `else` statements for conditional execution.
 
-```kire
+```riku
 if x > 10 {
     print("x is greater than 10")
 } else {
@@ -140,7 +140,7 @@ if x > 10 {
 
 Riku supports `while` loops for repeated execution.
 
-```kire
+```riku
 let i = 0;
 while i < 5 {
     print(i)
@@ -152,7 +152,7 @@ while i < 5 {
 
 Riku supports `print` for output and `input` for input.
 
-```kire
+```riku
 print("Enter your name: ")
 let name = input()
 print("Hello, " + name)

@@ -35,7 +35,6 @@ impl Source {
                 '-' => self.add_token("-", TokenType::Minus),
                 '*' => self.add_token("*", TokenType::Star),
                 '/' => self.add_token("/", TokenType::Slash),
-                '\n' => self.eat_char(&['\n']),
                 ';' => self.add_token(";", TokenType::EOL),
                 ',' => self.add_token(",", TokenType::Comma),
                 ' ' => self.eat_char(&[' ']),
@@ -45,6 +44,10 @@ impl Source {
                 '}' => self.add_token("}", TokenType::RBrace),
                 '&' => self.add_token("&", TokenType::Ampersand),
                 '|' => self.add_token("|", TokenType::Pipe),
+                '\n' => {
+                    self.add_token("\n", TokenType::EOL);
+                    self.line += 1;
+                }
                 '<' => {
                     if self.peek_next() == Some('=') {
                         self.advance();
@@ -128,6 +131,8 @@ impl Source {
             "else" => TokenType::Else,
             "input" => TokenType::Input,
             "int" => TokenType::Int,
+            "while" => TokenType::While,
+            "break" => TokenType::Break,
             _ => TokenType::Ident,
         };
         let token = Token::new(lexeme.trim(), self.line, token_type);

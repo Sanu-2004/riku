@@ -1,20 +1,6 @@
-let x = 10;
-let y = x + 20
-
-if (x < y) {
-    let z = y - x;
-    return z;
-} else {
-    return 0
+let x = int(input("enter a number"))
+let i = 0
+while i < x {
+    print(i)
+    i = i + 1
 }
-
-while (x < 100) {
-    x = x + 1
-}
-
-fn add(a, b) {
-    let result = a + b;
-    return result;
-}
-
-add(5, 7)

@@ -30,6 +30,8 @@ pub enum TokenType {
     True,
     False,
     Int,
+    While,
+    Break,
     EOL,
     EOF,
 }

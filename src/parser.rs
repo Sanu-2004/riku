@@ -125,6 +125,10 @@ impl Parser {
                     let stmt = self.parse_if();
                     stmts.push(stmt);
                 }
+                TokenType::While => {
+                    let stmt = self.parse_while();
+                    stmts.push(stmt);
+                }
                 _ => {
                     let Some(expr) = self.parse_expr() else {
                         return (stmts, found);
@@ -135,6 +139,34 @@ impl Parser {
             self.next()
         }
         (stmts, found)
+    }
+
+    fn parse_while(&mut self) -> Stmt {
+        let line = self.peek().unwrap().line;
+        self.next();
+        let condition = match self.parse_expr() {
+            Some(e) => e,
+            None => {
+                line_error(
+                    ErrorType::SyntaxError,
+                    line,
+                    format!("Expected expression, after `While`"),
+                );
+                process::exit(1);
+            }
+        };
+        let then = match self.peek() {
+            Some(t) if t.token_type == TokenType::LBrace => self.parse_brace(),
+            _ => {
+                line_error(
+                    ErrorType::SyntaxError,
+                    line,
+                    format!("Expected {{ and }}, after `loop`"),
+                );
+                process::exit(1);
+            }
+        };
+        Stmt::While(condition, Box::new(then))
     }
 
     fn parse_if(&mut self) -> Stmt {
@@ -184,8 +216,12 @@ impl Parser {
     }
 
     fn parse_print(&mut self) -> Stmt {
-        let line = self.peek().unwrap().line;
         self.next();
+        self.parse_paren_vec()
+    }
+
+    fn parse_paren_vec(&mut self) -> Stmt {
+        let line = self.peek().unwrap().line;
         if let Some(token) = self.peek() {
             let token = token.clone();
             if token.token_type == TokenType::LParen {
@@ -330,7 +366,6 @@ impl Parser {
         if self.peek().is_some() {
             if self.peek().unwrap().token_type == TokenType::LParen {
                 let expr = self.parse_expr();
-                self.next();
                 if let Some(exp) = expr {
                     return exp;
                 }
@@ -340,7 +375,7 @@ impl Parser {
             ErrorType::SyntaxError,
             line,
             format!(
-                "Expected expression, found `{}`",
+                "Expected expression after int, found `{}`",
                 self.peek().unwrap().lexeme
             ),
         );

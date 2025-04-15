@@ -135,6 +135,15 @@ impl Parser {
                     let stmt = self.parse_while();
                     stmts.push(stmt);
                 }
+                TokenType::Fn => {
+                    let stmt = self.parse_fn();
+                    stmts.push(stmt);
+                }
+                TokenType::Return => {
+                    self.next();
+                    let expr = self.parse_expr();
+                    stmts.push(Stmt::Return(expr));
+                }
                 _ => {
                     let Some(expr) = self.parse_expr() else {
                         return (stmts, found);
@@ -145,6 +154,91 @@ impl Parser {
             self.next()
         }
         (stmts, found)
+    }
+
+    fn parse_fn(&mut self) -> Stmt {
+        let line = self.peek().unwrap().line;
+        self.next();
+        let name = match self.peek() {
+            Some(t) if t.token_type == TokenType::Ident => {
+                let t = t.clone();
+                self.next();
+                t
+            }
+            _ => {
+                line_error(
+                    ErrorType::SyntaxError,
+                    line,
+                    format!(
+                        "Expected identifier, found `{}`",
+                        self.peek().unwrap().lexeme
+                    ),
+                );
+                process::exit(1);
+            }
+        };
+        let mut args = Vec::new();
+        if None == self.peek() || None == self.peek_next() {
+            line_error(
+                ErrorType::SyntaxError,
+                line,
+                format!("Expected `()`, found EOF"),
+            );
+            process::exit(1);
+        }
+        if self.peek().unwrap().token_type == TokenType::LParen {
+            self.next();
+            if self.peek().unwrap().token_type != TokenType::RParen {
+                loop {
+                    if let Some(token) = self.peek() {
+                        if token.token_type == TokenType::Ident {
+                            args.push(token.clone());
+                            self.next();
+                        } else {
+                            line_error(
+                                ErrorType::SyntaxError,
+                                line,
+                                format!("Expected identifier, found `{}`", token.lexeme),
+                            );
+                            process::exit(1);
+                        }
+                    }
+                    if self.check(",") {
+                        self.next();
+                    } else {
+                        break;
+                    }
+                }
+            }
+            if self.peek() == None || self.peek().unwrap().token_type != TokenType::RParen {
+                line_error(
+                    ErrorType::SyntaxError,
+                    line,
+                    format!("Expected `)`, found `{}`", self.peek().unwrap().lexeme),
+                );
+                process::exit(1);
+            }
+            self.next();
+        } else {
+            line_error(
+                ErrorType::SyntaxError,
+                line,
+                format!("Expected `(`, found `{}`", self.peek().unwrap().lexeme),
+            );
+            process::exit(1);
+        }
+        let body = match self.peek() {
+            Some(t) if t.token_type == TokenType::LBrace => self.parse_brace(),
+            _ => {
+                line_error(
+                    ErrorType::SyntaxError,
+                    line,
+                    format!("Expected {{ and }}, after `fn`"),
+                );
+                process::exit(1);
+            }
+        };
+        Stmt::Function(name, args, Box::new(body))
     }
 
     fn parse_while(&mut self) -> Stmt {
@@ -388,6 +482,43 @@ impl Parser {
         process::exit(1);
     }
 
+    fn parse_call(&mut self) -> Option<Expr> {
+        let name = self.peek().unwrap().clone();
+        self.next();
+        let line = self.peek().unwrap().line;
+        if self.peek().is_some() {
+            if self.peek().unwrap().token_type == TokenType::LParen {
+                self.next();
+                let mut arguments = Vec::new();
+                if self.peek()?.token_type != TokenType::RParen {
+                    loop {
+                        if let Some(expr) = self.parse_expr() {
+                            arguments.push(expr);
+                        } else {
+                            line_error(
+                                ErrorType::SyntaxError,
+                                line,
+                                format!(
+                                    "Expected expression, found `{}`",
+                                    self.peek().unwrap().lexeme
+                                ),
+                            );
+                            process::exit(1);
+                        }
+
+                        if !self.check(",") {
+                            break;
+                        }
+                        self.next();
+                    }
+                }
+                self.next();
+                return Some(Expr::new_call(Expr::new(name), arguments));
+            }
+        }
+        None
+    }
+
     fn parse_expr(&mut self) -> Option<Expr> {
         self.expr_logic()
     }
@@ -512,6 +643,15 @@ impl Parser {
                 Some(Expr::new(self.peek_back(1)?.clone()))
             }
             TokenType::Ident => {
+                match self.peek_next() {
+                    Some(t) if t.token_type == TokenType::LParen => {
+                        let expr = self.parse_call();
+                        if let Some(exp) = expr {
+                            return Some(exp);
+                        }
+                    }
+                    _ => {}
+                }
                 self.next();
                 Some(Expr::new(self.peek_back(1)?.clone()))
             }

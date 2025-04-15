@@ -135,6 +135,8 @@ impl Source {
             "while" => TokenType::While,
             "break" => TokenType::Break,
             "continue" => TokenType::Continue,
+            "fn" => TokenType::Fn,
+            "return" => TokenType::Return,
             _ => TokenType::Ident,
         };
         let token = Token::new(lexeme.trim(), self.line, token_type);

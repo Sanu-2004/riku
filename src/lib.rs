@@ -24,6 +24,7 @@ pub fn run_file(source: &str) {
     for stmt in parser.get_stmts() {
         stmt.eval(&mut env);
     }
+    // dbg!(env);
 }
 
 pub fn run_cli() {

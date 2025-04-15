@@ -158,6 +158,17 @@ let name = input()
 print("Hello, " + name)
 ```
 
+### Funtions
+Riku supports function declarations and calls.
+
+```riku
+fn add(x, y) {
+    return x + y
+}
+let result = add(5, 3)
+print(result) // Output: 8
+```
+
 ## Contributing
 
 Contributions are welcome! Feel free to open issues or submit pull requests.

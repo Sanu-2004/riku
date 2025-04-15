@@ -34,6 +34,8 @@ pub enum TokenType {
     While,
     Break,
     Continue,
+    Fn,
+    Return,
     EOL,
     EOF,
 }

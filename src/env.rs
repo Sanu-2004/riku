@@ -1,12 +1,22 @@
 use std::{cell::RefCell, collections::HashMap, fmt, process, rc::Rc};
 
-use crate::error::{ErrorType, error};
+use crate::{
+    error::{ErrorType, error},
+    stmt::Stmt,
+};
 
 #[derive(Debug, Clone)]
 pub enum Value {
     Number(f64),
     Bool(bool),
     String(String),
+    Function {
+        name: String,
+        params: Vec<String>,
+        body: Box<Stmt>,
+        closure: Rc<RefCell<Env>>,
+    },
+    Nil,
 }
 
 impl fmt::Display for Value {
@@ -15,6 +25,8 @@ impl fmt::Display for Value {
             Value::Number(n) => write!(f, "{}", n),
             Value::Bool(b) => write!(f, "{}", b),
             Value::String(s) => write!(f, "{}", s),
+            Value::Nil => write!(f, "nil"),
+            Value::Function { name, .. } => write!(f, "<function {}>", name),
         }
     }
 }

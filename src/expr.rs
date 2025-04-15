@@ -3,7 +3,7 @@ use std::{cell::RefCell, fmt, process, rc::Rc};
 use crate::{
     env::{Env, Value},
     error::{ErrorType, error, line_error},
-    stmt::Stmt,
+    stmt::{ControlFlow, Stmt},
     token::{Token, TokenType},
 };
 
@@ -37,6 +37,7 @@ pub enum Expr {
     Variable(Token),
     Input(Box<Stmt>),
     Int(Box<Expr>),
+    Call { callee: Box<Expr>, args: Vec<Expr> },
 }
 
 impl Expr {
@@ -58,6 +59,13 @@ impl Expr {
                 );
                 process::exit(1);
             }
+        }
+    }
+
+    pub fn new_call(callee: Expr, args: Vec<Expr>) -> Self {
+        Expr::Call {
+            callee: Box::new(callee),
+            args,
         }
     }
 
@@ -161,7 +169,53 @@ impl Expr {
                     let num = if b { 1.0 } else { 0.0 };
                     Value::Number(num)
                 }
+                _ => {
+                    error(
+                        ErrorType::TypeError,
+                        "Invalid operand, expected number or string".to_string(),
+                    );
+                    Value::Number(0.0)
+                }
             },
+            Self::Call { callee, args } => {
+                let func = callee.eval(env);
+                let args = args.iter().map(|a| a.eval(env)).collect::<Vec<_>>();
+                match func {
+                    Value::Function {
+                        params,
+                        body,
+                        closure,
+                        ..
+                    } => {
+                        if args.len() != params.len() {
+                            error(
+                                ErrorType::RuntimeError,
+                                format!(
+                                    "Expected {} arguments but got {}",
+                                    params.len(),
+                                    args.len()
+                                ),
+                            );
+                            process::exit(1);
+                        }
+                        let mut child_env = Env::child_env(closure);
+                        for (param, arg) in params.iter().zip(args) {
+                            child_env.borrow_mut().define(param.clone(), arg);
+                        }
+                        match body.eval(&mut child_env) {
+                            ControlFlow::Return(v) => v,
+                            _ => Value::Nil,
+                        }
+                    }
+                    _ => {
+                        error(
+                            ErrorType::TypeError,
+                            format!("`{}` is not a function", func),
+                        );
+                        Value::Nil
+                    }
+                }
+            }
         }
     }
 }
@@ -179,6 +233,14 @@ impl fmt::Display for Expr {
             Self::String(s) => write!(f, "{}", s),
             Self::Input(_) => write!(f, "Input box"),
             Self::Int(_) => write!(f, "Int box"),
+            Self::Call { callee, args } => {
+                let args_str = args
+                    .iter()
+                    .map(|arg| arg.to_string())
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                write!(f, "{}({})", callee, args_str)
+            }
         }
     }
 }

@@ -5,10 +5,12 @@ use crate::token::Token;
 use std::cell::RefCell;
 use std::rc::Rc;
 
+#[derive(Debug, Clone)]
 pub enum ControlFlow {
     Value(Value),
     Break,
     Continue,
+    Return(Value),
     None,
 }
 
@@ -21,8 +23,10 @@ pub enum Stmt {
     Print(Vec<Expr>),
     If(Expr, Box<Stmt>, Option<Box<Stmt>>),
     While(Expr, Box<Stmt>),
+    Function(Token, Vec<Token>, Box<Stmt>),
     Break,
     Continue,
+    Return(Option<Expr>),
 }
 
 impl Stmt {
@@ -44,7 +48,7 @@ impl Stmt {
                 for stmt in stmts {
                     let res = stmt.eval(&mut child_env);
                     match res {
-                        ControlFlow::Break | ControlFlow::Continue => {
+                        ControlFlow::Break | ControlFlow::Continue | ControlFlow::Return(_) => {
                             return res;
                         }
                         _ => {}
@@ -75,9 +79,26 @@ impl Stmt {
                     match res {
                         ControlFlow::Break => break,
                         ControlFlow::Continue => continue,
+                        ControlFlow::Return(_) => return res,
                         _ => {}
                     }
                 }
+                ControlFlow::None
+            }
+            Stmt::Return(expr) => {
+                if let Some(expr) = expr {
+                    return ControlFlow::Return(expr.eval(env));
+                }
+                ControlFlow::Return(Value::Nil)
+            }
+            Stmt::Function(name, args, body) => {
+                let function = Value::Function {
+                    name: name.lexeme.clone(),
+                    params: args.iter().map(|arg| arg.lexeme.clone()).collect(),
+                    body: body.clone(),
+                    closure: env.clone(),
+                };
+                env.borrow_mut().define(name.lexeme.clone(), function);
                 ControlFlow::None
             }
         }

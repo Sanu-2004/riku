@@ -3,7 +3,7 @@ use std::{cell::RefCell, fmt, process, rc::Rc};
 use crate::{
     env::{Env, Value},
     error::{ErrorType, error, line_error},
-    stmt::{ControlFlow, Stmt},
+    stmt::ControlFlow,
     token::{Token, TokenType},
 };
 
@@ -35,8 +35,6 @@ pub enum Expr {
     Unary(Op, Box<Expr>),
     Group(Box<Expr>),
     Variable(Token),
-    Input(Box<Stmt>),
-    Int(Box<Expr>),
     Call { callee: Box<Expr>, args: Vec<Expr> },
 }
 
@@ -67,14 +65,6 @@ impl Expr {
             callee: Box::new(callee),
             args,
         }
-    }
-
-    pub fn new_int(expr: Expr) -> Self {
-        Expr::Int(Box::new(expr))
-    }
-
-    pub fn new_input(stmt: Stmt) -> Self {
-        Expr::Input(Box::new(stmt))
     }
 
     pub fn new_group(expr: Expr) -> Self {
@@ -146,37 +136,6 @@ impl Expr {
                 process::exit(1);
             }),
             Self::String(s) => Value::String(s.clone()),
-            Self::Input(stmt) => {
-                let mut input = String::new();
-                stmt.eval(env);
-                std::io::stdin().read_line(&mut input).unwrap();
-                let value = Value::String(input.trim().to_string());
-                value
-            }
-            Self::Int(n) => match n.eval(env) {
-                Value::Number(_) => self.eval(env),
-                Value::String(s) => {
-                    let num = s.parse::<f64>().unwrap_or_else(|_| {
-                        error(
-                            ErrorType::TypeError,
-                            format!("Invalid string `{}` for int", s),
-                        );
-                        0.0
-                    });
-                    Value::Number(num)
-                }
-                Value::Bool(b) => {
-                    let num = if b { 1.0 } else { 0.0 };
-                    Value::Number(num)
-                }
-                _ => {
-                    error(
-                        ErrorType::TypeError,
-                        "Invalid operand, expected number or string".to_string(),
-                    );
-                    Value::Number(0.0)
-                }
-            },
             Self::Call { callee, args } => {
                 let func = callee.eval(env);
                 let args = args.iter().map(|a| a.eval(env)).collect::<Vec<_>>();
@@ -207,6 +166,7 @@ impl Expr {
                             _ => Value::Nil,
                         }
                     }
+                    Value::FuncBuiltIn { body, .. } => body(args),
                     _ => {
                         error(
                             ErrorType::TypeError,
@@ -231,8 +191,6 @@ impl fmt::Display for Expr {
             Self::Logic(l, op, r) => write!(f, "({} {} {})", l, op, r),
             Self::Variable(t) => write!(f, "{}", t.lexeme),
             Self::String(s) => write!(f, "{}", s),
-            Self::Input(_) => write!(f, "Input box"),
-            Self::Int(_) => write!(f, "Int box"),
             Self::Call { callee, args } => {
                 let args_str = args
                     .iter()
@@ -352,7 +310,7 @@ impl Op {
                 error(
                     ErrorType::TypeError,
                     format!(
-                        "Invalid Comparison Type: `{}` and `{}` both must be same type",
+                        "Invalid Comparison Type: `{:?}` and `{:?}` both must be same type",
                         l, r
                     ),
                 );

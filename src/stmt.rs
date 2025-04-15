@@ -20,7 +20,6 @@ pub enum Stmt {
     Let(Token, Expr),
     Assign(Token, Expr),
     Group(Vec<Stmt>),
-    Print(Vec<Expr>),
     If(Expr, Box<Stmt>, Option<Box<Stmt>>),
     While(Expr, Box<Stmt>),
     Function(Token, Vec<Token>, Box<Stmt>),
@@ -54,13 +53,6 @@ impl Stmt {
                         _ => {}
                     }
                 }
-                ControlFlow::None
-            }
-            Stmt::Print(exprs) => {
-                for expr in exprs {
-                    print!("{}", expr.eval(env));
-                }
-                println!();
                 ControlFlow::None
             }
             Stmt::If(con, then, else_stmt) => {

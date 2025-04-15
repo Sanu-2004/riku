@@ -9,6 +9,7 @@ pub mod error;
 mod expr;
 pub mod parser;
 pub mod source;
+mod std_fn;
 mod stmt;
 mod token;
 
@@ -24,6 +25,7 @@ pub fn run_file(source: &str) {
     for stmt in parser.get_stmts() {
         stmt.eval(&mut env);
     }
+    println!();
     // dbg!(env);
 }
 

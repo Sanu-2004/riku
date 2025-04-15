@@ -117,10 +117,6 @@ impl Parser {
                     let stmt = self.parse_brace();
                     stmts.push(stmt);
                 }
-                TokenType::Print => {
-                    let stmt = self.parse_print();
-                    stmts.push(stmt);
-                }
                 TokenType::If => {
                     let stmt = self.parse_if();
                     stmts.push(stmt);
@@ -315,70 +311,6 @@ impl Parser {
         Stmt::If(condition, Box::new(then), else_stmt.map(Box::new))
     }
 
-    fn parse_print(&mut self) -> Stmt {
-        self.next();
-        self.parse_paren_vec()
-    }
-
-    fn parse_paren_vec(&mut self) -> Stmt {
-        let line = self.peek().unwrap().line;
-        if let Some(token) = self.peek() {
-            let token = token.clone();
-            if token.token_type == TokenType::LParen {
-                self.next();
-                let mut found = false;
-                let mut exprs = Vec::new();
-                while let Some(token) = self.peek() {
-                    if token.token_type == TokenType::RParen {
-                        found = true;
-                        break;
-                    }
-                    if let Some(expr) = self.parse_expr() {
-                        exprs.push(expr);
-                    } else {
-                        line_error(
-                            ErrorType::SyntaxError,
-                            line,
-                            format!(
-                                "Expected expression, found `{}`",
-                                self.peek().unwrap().lexeme
-                            ),
-                        );
-                        process::exit(1);
-                    }
-                    match self.peek() {
-                        Some(t) if t.token_type == TokenType::Comma => {
-                            self.next();
-                        }
-                        Some(t) if t.token_type == TokenType::RParen => {
-                            found = true;
-                            break;
-                        }
-                        _ => {
-                            break;
-                        }
-                    }
-                }
-                if !found {
-                    line_error(
-                        ErrorType::SyntaxError,
-                        token.line,
-                        format!("Expected `)` or `,` in the statement"),
-                    );
-                    process::exit(1);
-                }
-                self.next();
-                return Stmt::Print(exprs);
-            }
-        }
-        line_error(
-            ErrorType::SyntaxError,
-            line,
-            format!("Expected `(`, after the print statement"),
-        );
-        process::exit(1);
-    }
-
     fn parse_brace(&mut self) -> Stmt {
         let line = self.peek().unwrap().line;
         self.next();
@@ -458,28 +390,6 @@ impl Parser {
         }
         let expr = expr.unwrap();
         Stmt::Let(name, expr)
-    }
-
-    fn parse_int(&mut self) -> Expr {
-        let line = self.peek().unwrap().line;
-        self.next();
-        if self.peek().is_some() {
-            if self.peek().unwrap().token_type == TokenType::LParen {
-                let expr = self.parse_expr();
-                if let Some(exp) = expr {
-                    return exp;
-                }
-            }
-        }
-        line_error(
-            ErrorType::SyntaxError,
-            line,
-            format!(
-                "Expected expression after int, found `{}`",
-                self.peek().unwrap().lexeme
-            ),
-        );
-        process::exit(1);
     }
 
     fn parse_call(&mut self) -> Option<Expr> {
@@ -658,14 +568,6 @@ impl Parser {
             TokenType::String => {
                 self.next();
                 Some(Expr::new(self.peek_back(1)?.clone()))
-            }
-            TokenType::Input => {
-                let print_stmt = self.parse_print();
-                Some(Expr::new_input(print_stmt))
-            }
-            TokenType::Int => {
-                let expr = self.parse_int();
-                Some(Expr::new_int(expr))
             }
             TokenType::EOF => None,
             _ => {

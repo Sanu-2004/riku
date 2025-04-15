@@ -1,4 +1,4 @@
-print("Prime number checker")
+println("Prime number checker")
 let n = int(input("Enter a number: "))
 let i = 2
 let flag = true

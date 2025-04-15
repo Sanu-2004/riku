@@ -1,10 +1,10 @@
-print("all the prime numbers in a range")
+println("all the prime numbers in a range")
 fn check_prime(n) {
     if n <= 1 {
         return false;
     }
     let i = 2;
-    while i <= n/2 {
+    while i * i <= n {
         if n % i == 0 {
             return false;
         }
@@ -18,7 +18,7 @@ let i = 1;
 let count = 1;
 while i <= n {
     if check_prime(i) {
-        print(count,"th prime -> ",i);
+        println(count,"th prime -> ",i);
         count = count +1
     }
     i = i + 1;

@@ -2,6 +2,7 @@ use std::{cell::RefCell, collections::HashMap, fmt, process, rc::Rc};
 
 use crate::{
     error::{ErrorType, error},
+    std_fn::std_fn,
     stmt::Stmt,
 };
 
@@ -16,6 +17,10 @@ pub enum Value {
         body: Box<Stmt>,
         closure: Rc<RefCell<Env>>,
     },
+    FuncBuiltIn {
+        name: String,
+        body: fn(Vec<Value>) -> Value,
+    },
     Nil,
 }
 
@@ -27,6 +32,7 @@ impl fmt::Display for Value {
             Value::String(s) => write!(f, "{}", s),
             Value::Nil => write!(f, "nil"),
             Value::Function { name, .. } => write!(f, "<function {}>", name),
+            Value::FuncBuiltIn { name, .. } => write!(f, "<builtin function {}>", name),
         }
     }
 }
@@ -39,10 +45,12 @@ pub struct Env {
 
 impl Env {
     pub fn new() -> Rc<RefCell<Self>> {
-        Rc::new(RefCell::new(Env {
+        let mut env = Env {
             map: HashMap::new(),
             parent: None,
-        }))
+        };
+        std_fn(&mut env);
+        Rc::new(RefCell::new(env))
     }
 
     pub fn child_env(parent: Rc<RefCell<Self>>) -> Rc<RefCell<Self>> {

@@ -49,6 +49,9 @@ impl Source {
                     self.add_token("\n", TokenType::EOL);
                     self.line += 1;
                 }
+                '\r' | '\t' => {
+                    self.advance();
+                }
                 '<' => {
                     if self.peek_next() == Some('=') {
                         self.advance();
@@ -152,6 +155,7 @@ impl Source {
             syntax.push(c);
             pos += c.len_utf8();
         }
+        println!("{:?}", syntax);
         line_error(error, self.line, format!("Unexpected Syntax `{}`", syntax));
         process::exit(1);
     }
